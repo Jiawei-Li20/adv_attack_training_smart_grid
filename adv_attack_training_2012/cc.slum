@@ -1,0 +1,41 @@
+#!/bin/bash
+#SBATCH --job-name=icl    # create a short name for your job
+#SBATCH --nodes=1                # node count
+#SBATCH --ntasks=1               # total number of tasks across all nodes
+#SBATCH --cpus-per-task=16        # cpu-cores per task (>1 if multi-threaded tasks)
+#SBATCH --mem=60G                 # total memory per node (4 GB per cpu-core is default)
+#SBATCH --time=72:00:00          # total run time limit (HH:MM:SS)
+#SBATCH --mail-type=begin        # send email when job begins
+#SBATCH --mail-type=end          # send email when job ends
+#SBATCH --mail-user=haoyu@princeton.edu
+#SBATCH --gres=gpu:1             # number of gpus per node
+#SBATCH --account=mltheory
+#SBATCH --nodelist=node105
+#SBATCH --output=slurm/%x-%j.out
+
+
+
+source /n/fs/ptml/haoyu/miniconda3/etc/profile.d/conda.sh
+conda activate battery
+
+export LD_LIBRARY_PATH=/n/fs/ptml/haoyu/miniconda3/lib:$LD_LIBRARY_PATH
+
+#export TRANSFORMERS_CACHE=/n/fs/ptml/haoyu/cache/
+#export HF_DATASETS_CACHE=/n/fs/ptml/haoyu/cache/dataset/
+
+#export WANDB_API_KEY=b4d09f30ec0646fb9f394d4d83f30e92347d0bbe
+#export WANDB_PROJECT='model-merge-llama'
+
+seed=11
+shuffle_seed=11
+
+#echo "Instruction tuning openorca"
+echo "main_advtrain_cost_2023_addcostpred.py  -trainaim cost"
+python main_advtrain_cost_2023_addcostpred.py  -trainaim cost
+#torchrun --nnodes 1 --nproc_per_node 4 --master_port $(( $RANDOM % 500 + 29500 ))  llama_finetuning1.py --enable_fsdp --use_peft --peft_method lora --dataset openorca_dataset --ood_dataset arc_c_dataset --model_name models/7B-HF/ --pure_bf16 --output_dir models/openorca-5e-5-$seed-$shuffle_seed/ --data_seed 0 --seed $seed --shuffle_seed $shuffle_seed --lr 5e-5 --save_every_epoch --num_epochs 6 --batch_size_training 32 --micro_batch_size 32 --weight_decay 0.0 --run_validation_first --shots 100000
+
+#torchrun --nnodes 1 --nproc_per_node 4 --master_port $(( $RANDOM % 500 + 29500 ))  llama_finetuning1.py --enable_fsdp --use_peft --peft_method lora --dataset openorca_dataset --ood_dataset arc_c_dataset --model_name models/7B-HF/ --pure_bf16 --output_dir models/openorca-1e-4-$seed-$shuffle_seed/ --data_seed 0 --seed $seed --shuffle_seed $shuffle_seed --lr 1e-4 --save_every_epoch --num_epochs 6 --batch_size_training 32 --micro_batch_size 32 --weight_decay 0.0 --run_validation_first --shots 100000
+
+#torchrun --nnodes 1 --nproc_per_node 4 --master_port $(( $RANDOM % 500 + 29500 ))  llama_finetuning1.py --enable_fsdp --use_peft --peft_method lora --dataset openorca_dataset --ood_dataset arc_c_dataset --model_name models/7B-HF/ --pure_bf16 --output_dir models/openorca-2e-5-$seed-$shuffle_seed/ --data_seed 0 --seed $seed --shuffle_seed $shuffle_seed --lr 2e-5 --save_every_epoch --num_epochs 6 --batch_size_training 32 --micro_batch_size 32 --weight_decay 0.0 --run_validation_first --shots 100000
+
+
